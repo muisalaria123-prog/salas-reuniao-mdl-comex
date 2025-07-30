@@ -1,0 +1,176 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sala de Reunião MDL COMEX</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Bodoni MT', serif;
+      background-color: #617bcb;
+      background-image: url('sua-imagem.jpg');
+      background-size: cover;
+      background-position: center;
+      color: #ffffff;
+    }
+
+    header {
+      background-color: #004aad;
+      padding: 20px;
+      text-align: center;
+      font-size: 2em;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 50px auto;
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 20px;
+      border-radius: 10px;
+    }
+
+    .btn-agendar {
+      display: block;
+      width: 200px;
+      margin: 20px auto;
+      padding: 15px;
+      background-color: #004aad;
+      color: #ffc300;
+      font-size: 1.2em;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+    }
+
+    form {
+      margin-top: 30px;
+    }
+
+    label, select, input {
+      display: block;
+      width: 100%;
+      margin-bottom: 15px;
+      padding: 10px;
+      border-radius: 5px;
+      border: none;
+    }
+
+    label {
+      color: #ffc300;
+      font-weight: bold;
+    }
+
+    #reservas {
+      margin-top: 40px;
+      background-color: #fff;
+      color: #000;
+      padding: 15px;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    Sala de Reunião MDL COMEX
+  </header>
+
+  <div class="container">
+    <a href="https://forms.gle/seu_formulario" target="_blank" class="btn-agendar">Agende aqui</a>
+
+    <form id="formAgendamento">
+      <label for="nome">Seu nome:</label>
+      <input type="text" id="nome" name="nome" required>
+
+      <label for="sala">Escolha a sala:</label>
+      <select id="sala" name="sala" required>
+        <option value="Sala de Reunião 2º andar">Sala de Reunião 2º andar</option>
+        <option value="Sala de Reunião 8º andar">Sala de Reunião 8º andar</option>
+      </select>
+
+      <label for="data">Escolha a data:</label>
+      <input type="date" id="data" name="data" required>
+
+      <label for="hora">Escolha o horário:</label>
+      <select id="hora" name="hora" required></select>
+
+      <button type="submit" class="btn-agendar">Salvar agendamento</button>
+    </form>
+
+    <div id="reservas">
+      <h3>Reservas Confirmadas</h3>
+      <ul id="listaReservas"></ul>
+    </div>
+  </div>
+
+  <script>
+    const horaSelect = document.getElementById('hora');
+    const listaReservas = document.getElementById('listaReservas');
+    let reservas = JSON.parse(localStorage.getItem('reservas')) || [];
+
+    for (let hora = 8; hora <= 17; hora++) {
+      horaSelect.innerHTML += `<option value="${hora.toString().padStart(2, '0')}:00">${hora.toString().padStart(2, '0')}:00</option>`;
+      horaSelect.innerHTML += `<option value="${hora.toString().padStart(2, '0')}:30">${hora.toString().padStart(2, '0')}:30</option>`;
+    }
+
+    atualizarLista();
+
+    document.getElementById('formAgendamento').addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      const nome = document.getElementById('nome').value.trim();
+      const sala = document.getElementById('sala').value;
+      const data = document.getElementById('data').value;
+      const hora = document.getElementById('hora').value;
+
+      if (!nome || !data || !hora) {
+        alert('Todos os campos são obrigatórios.');
+        return;
+      }
+
+      const conflito = reservas.find(r => r.sala === sala && r.data === data && r.hora === hora);
+
+      if (conflito) {
+        alert('Este horário já está reservado para essa sala.');
+        return;
+      }
+
+      const novaReserva = { nome, sala, data, hora };
+      reservas.push(novaReserva);
+      localStorage.setItem('reservas', JSON.stringify(reservas));
+      atualizarLista();
+      this.reset();
+    });
+
+    function atualizarLista() {
+      listaReservas.innerHTML = '';
+      reservas.forEach(r => {
+        const item = document.createElement('li');
+        item.textContent = `${r.nome} reservou ${r.sala} em ${r.data} às ${r.hora}`;
+        listaReservas.appendChild(item);
+      });
+    }
+
+    function verificarLimpezaMensal() {
+      const agora = new Date();
+      const ultimoDia = new Date(agora.getFullYear(), agora.getMonth() + 1, 0);
+
+      if (
+        agora.getDate() === ultimoDia.getDate() &&
+        agora.getHours() === 23 &&
+        agora.getMinutes() === 59
+      ) {
+        localStorage.removeItem('reservas');
+        reservas = [];
+        atualizarLista();
+        alert('Histórico de reservas limpo automaticamente no fim do mês.');
+      }
+    }
+
+    setInterval(verificarLimpezaMensal, 60000);
+  </script>
+</body>
+</html>
